@@ -1,0 +1,195 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Iridium Tracker</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="onButtonClick()">Load satellites</ion-button>
+      @if (selected) {
+        <ion-button (click)="toggleAllFootprints()" [attr.aria-pressed]="showAllFootprints">
+          {{ showAllFootprints ? 'Hide all footprints' : 'Show all footprints' }}
+        </ion-button>
+        <ion-button (click)="showSatellite = !showSatellite"
+        [attr.aria-expanded]="showSatellite">Satellite</ion-button>
+      }
+      <ion-button (click)="toggleLocationPanel()"
+      [attr.aria-expanded]="showLocation">My location</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="tracker-layout" [class.with-satellite]="showSatellite && selected" [class.with-location]="showLocation">
+    @if (showSatellite && selected; as item) {
+      <aside class="info-panel satellite-panel"
+        aria-labelledby="satellite-heading">
+        <header class="panel-header">
+          <h2 id="satellite-heading">{{ item.name }}</h2>
+          <button type="button" class="close" aria-label="Close satellite details"
+          (click)="showSatellite = false">&times;</button>
+        </header>
+        <div class="panel-body">
+          <h3>Current position</h3>
+          <dl class="readings">
+            <dt>Latitude</dt><dd>{{ item.position.center.lat | number:'1.3-3' }}&deg;</dd>
+            <dt>Longitude</dt><dd>{{ item.position.center.lng | number:'1.3-3' }}&deg;</dd>
+            <dt>Altitude</dt><dd>{{ item.position.altitudeKm | number:'1.0-0' }} km</dd>
+            <dt>Footprint radius</dt><dd>{{ footprintRadiusKm(item.position.altitudeKm) | number:'1.0-0' }} km</dd>
+          </dl>
+          @if (selectedLook; as look) {
+            <h3>From your location</h3>
+            <dl class="readings">
+              <dt>Azimuth</dt><dd>{{ look.azimuth | number:'1.0-0' }}&deg;</dd>
+              <dt>Elevation</dt><dd>{{ look.elevation | number:'1.0-1' }}&deg;</dd>
+              <dt>Slant range</dt><dd>{{ look.range | number:'1.0-0' }} km</dd>
+              <dt>Free-space path loss</dt>
+              @if (look.pathLossDb !== null) {
+                <dd>{{ look.pathLossDb | number:'1.1-1' }} dB</dd>
+              }
+              @if (look.pathLossDb === null) {
+                <dd>{{ look.elevation < 0 ? 'Below horizon' : 'Unavailable' }}</dd>
+              }
+              <dt>Above {{ minimumElevation }}&deg;</dt><dd>{{ look.elevation >= minimumElevation ? 'Yes' : 'No' }}</dd>
+            </dl>
+          }
+          <h3>Orbit data</h3>
+          <dl class="readings">
+            <dt>NORAD ID</dt><dd>{{ item.orbit.satnum }}</dd>
+            <dt>TLE epoch</dt><dd>{{ epoch | date:'yyyy-MM-dd HH:mm':'UTC' }} UTC</dd>
+          </dl>
+        </div>
+      </aside>
+    }
+
+    <div id="map_canvas"></div>
+
+    @if (showLocation) {
+      <aside class="info-panel location-panel" aria-labelledby="location-heading">
+        <header class="panel-header">
+          <h2 id="location-heading">My location</h2>
+          <button type="button" class="close" aria-label="Close location panel"
+          (click)="toggleLocationPanel()">&times;</button>
+        </header>
+        <div class="panel-body">
+          <div class="location-actions">
+            <button class="location-button" type="button" [disabled]="locating || !map" (click)="useLocation()">
+              {{ locating ? 'Finding location…' : locationSource === 'device' ? 'Update my location' : 'Use my location' }}
+            </button>
+            <button class="location-button secondary" type="button" [disabled]="locating || !map"
+              [attr.aria-pressed]="pickingLocation" (click)="toggleLocationPicker()">
+              {{ pickingLocation ? 'Cancel picking' : 'Pick on map' }}
+            </button>
+          </div>
+          @if (pickingLocation) {
+            <p class="muted" role="status">Click an empty spot on the map to set your location.</p>
+          }
+          @if (locationError) {
+            <p class="location-error" role="alert">{{ locationError }}</p>
+          }
+          <label class="aircraft-toggle">
+            <input type="checkbox" [checked]="aircraftMode" (change)="toggleAircraftMode()">
+            Aircraft simulation
+          </label>
+          @if (aircraftMode) {
+            <fieldset class="aircraft-controls">
+              <legend>Aircraft attitude and altitude</legend>
+              @for (control of aircraftControls; track control.key) {
+                <label>
+                  {{ control.label }}
+                  <input #setting type="number" [min]="control.min" [max]="control.max"
+                    [step]="control.step" [value]="aircraft[control.key]"
+                    (change)="setAircraftControl(control.key, setting.valueAsNumber)">
+                </label>
+              }
+              <label class="aircraft-mount">
+                Antenna mount
+                <select #mount [value]="mountIndex" (change)="setMount(mount.selectedIndex)">
+                  @for (candidate of mounts; track candidate.name; let index = $index) {
+                    <option [value]="index">{{ candidate.name }}</option>
+                  }
+                </select>
+              </label>
+            </fieldset>
+            <canvas #airframePreview class="airframe-preview" width="420" height="188"
+              role="img" [attr.aria-label]="'Generic airframe with ' + mounts[mountIndex].name + ' mount highlighted'"></canvas>
+            <p class="muted">Generic airframe. Predictions use geometric blockage and hold aircraft position and attitude fixed.</p>
+          }
+          <label class="elevation-label" for="minimum-elevation">
+            Minimum elevation <strong>{{ minimumElevation }}&deg;</strong>
+          </label>
+          <input #elevation id="minimum-elevation" type="range" min="0" max="45"
+            [value]="minimumElevation" (input)="setElevation(elevation.valueAsNumber)">
+            @if (!observer) {
+              <p class="muted">Use your location or pick a point to see satellites above your minimum elevation.</p>
+            }
+            @if (observer) {
+              <p class="muted">{{ locationSource === 'custom' ? 'Custom location' : 'Device location' }}<br>{{ observerLatitude | number:'1.3-3' }}&deg;, {{ observerLongitude | number:'1.3-3' }}&deg;</p>
+              <p class="count"><strong>{{ visible.length }}</strong> satellites in view</p>
+              @if (aircraftMode && selected) {
+                <p>{{ blocked.length }} blocked by the airframe above {{ minimumElevation }}&deg;</p>
+              }
+              @if (visible[0]; as best) {
+                <p>Highest: <strong>{{ best.name }}</strong> at {{ best.elevation | number:'1.0-0' }}&deg;</p>
+              }
+              @if (visible[0] && visible[0].pathLossDb !== null) {
+                <p>
+                  Estimated free-space path loss: <strong>{{ visible[0].pathLossDb | number:'1.1-1' }} dB</strong>
+                </p>
+              }
+              @if (visible[0] && visible[0].pathLossDb !== null) {
+                <p class="muted">
+                  This estimate covers distance loss only. Antenna gain, obstructions, and beam power affect received signal strength.
+                </p>
+              }
+              @if (!selected) {
+                <p class="muted">Load the satellite feed to calculate visibility.</p>
+              }
+              @if (forecast.length) {
+                <h3>Next 60 minutes</h3>
+                <div class="forecast" aria-label="Predicted number of visible satellites every five minutes">
+                  @for (sample of forecast; track sample) {
+                    <div class="forecast-column"
+                      [attr.title]="'+' + sample.minute + ' min: ' + sample.count + ' visible'">
+                      <span>{{ sample.count }}</span>
+                      <div class="forecast-bar" [style.height.%]="sample.count / forecastMax * 72"></div>
+                    </div>
+                  }
+                </div>
+                <div class="forecast-axis"><span>Now</span><span>+30 min</span><span>+60 min</span></div>
+                @if (aircraftMode && mountForecast.length) {
+                  <table class="mount-comparison">
+                    <caption>Clear satellites by mount over 60 minutes</caption>
+                    <thead><tr><th scope="col">Mount</th><th scope="col">Min</th><th scope="col">Avg</th></tr></thead>
+                    <tbody>
+                      @for (candidate of mounts; track candidate.name; let index = $index) {
+                        <tr [class.active-mount]="mountIndex === index">
+                          <th scope="row">{{ candidate.name }}</th>
+                          <td>{{ mountForecast[index].minimum }}</td>
+                          <td>{{ mountForecast[index].average | number:'1.1-1' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+                <h3>Sky view</h3>
+                <div class="sky" aria-label="Sky view with north at the top and zenith at the center">
+                  <span class="north">N</span><span class="east">E</span>
+                  <span class="south">S</span><span class="west">W</span>
+                  @for (item of visible; track item) {
+                    <span class="sky-dot" [style.left.%]="item.x"
+                    [style.top.%]="item.y" [attr.title]="item.name"></span>
+                  }
+                  @for (item of blocked; track item) {
+                    <span class="sky-dot blocked-dot" [style.left.%]="item.x"
+                    [style.top.%]="item.y" [attr.title]="item.name + ' (blocked)'"></span>
+                  }
+                </div>
+                <p class="muted sky-caption">Center is directly overhead.</p>
+                @if (aircraftMode) {
+                  <p class="muted sky-caption">Coral markers show blocked satellites.</p>
+                }
+              }
+            }
+          </div>
+        </aside>
+      }
+    </div>
+  </ion-content>

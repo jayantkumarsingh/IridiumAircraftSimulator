@@ -1,0 +1,35 @@
+{
+    "compileOnSave":  false,
+    "compilerOptions":  {
+                            "outDir":  "./dist/out-tsc",
+                            "sourceMap":  true,
+                            "declaration":  false,
+                            "experimentalDecorators":  true,
+                            "moduleResolution":  "bundler",
+                            "importHelpers":  true,
+                            "target":  "ES2022",
+                            "module":  "ESNext",
+                            "lib":  [
+                                        "ES2022",
+                                        "dom",
+                                        "ESNext.Disposable"
+                                    ],
+                            "paths":  {
+                                          "satellite.js/dist/io":  [
+                                                                       "./node_modules/satellite.js/dist/io"
+                                                                   ],
+                                          "satellite.js/dist/propagation":  [
+                                                                                "./node_modules/satellite.js/dist/propagation"
+                                                                            ],
+                                          "satellite.js/dist/transforms":  [
+                                                                               "./node_modules/satellite.js/dist/transforms"
+                                                                           ]
+                                      },
+                            "strict":  false
+                        },
+    "angularCompilerOptions":  {
+                                   "strictInjectionParameters":  true,
+                                   "strictInputAccessModifiers":  true,
+                                   "strictTemplates":  true
+                               }
+}
