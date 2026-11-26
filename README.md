@@ -71,11 +71,11 @@ x_f=x\cos\theta+y\sin\theta,\qquad
 y_f=-x\sin\theta+y\cos\theta,\qquad z_f=z.
 $$
 
-For the map subpoint, the library wraps the longitude $\lambda=\operatorname{atan2}(y,x)-\theta$ into $[-\pi,\pi)$. Set $p=\sqrt{x^2+y^2}$, $a=6378.137$ km, $b=6356.7523142$ km, $f=(a-b)/a$, and $e^2=2f-f^2$. Starting from $\phi=\operatorname{atan2}(z,p)$, satellite.js iterates the geodetic latitude and then computes the ellipsoidal satellite altitude.
+For the map subpoint, the library wraps the longitude $\lambda=\mathrm{atan2}(y,x)-\theta$ into $[-\pi,\pi)$. Set $p=\sqrt{x^2+y^2}$, $a=6378.137$ km, $b=6356.7523142$ km, $f=(a-b)/a$, and $e^2=2f-f^2$. Starting from $\phi=\mathrm{atan2}(z,p)$, satellite.js iterates the geodetic latitude and then computes the ellipsoidal satellite altitude.
 
 $$
 N(\phi)=\frac{a}{\sqrt{1-e^2\sin^2\phi}},\qquad
-\phi_\mathrm{next}=\operatorname{atan2}(z+e^2N(\phi)\sin\phi,p),\qquad
+\phi_\mathrm{next}=\mathrm{atan2}(z+e^2N(\phi)\sin\phi,p),\qquad
 h=p\cos\phi+z\sin\phi-a\sqrt{1-e^2\sin^2\phi}.
 $$
 
@@ -102,7 +102,7 @@ U &= \cos\phi_o\cos\lambda_o\,\Delta x+\cos\phi_o\sin\lambda_o\,\Delta y+\sin\ph
 \end{aligned}
 $$
 
-Slant range is $\rho=\sqrt{E^2+N^2+U^2}$ km. Elevation is $\epsilon=\arcsin(U/\rho)$, and azimuth is $A=\operatorname{atan2}(E,N)$ wrapped to one full turn clockwise from true north. A satellite qualifies when its elevation is at least the minimum elevation setting. Aircraft mode also requires a clear path from the selected mount. The visible list is sorted by elevation.
+Slant range is $\rho=\sqrt{E^2+N^2+U^2}$ km. Elevation is $\epsilon=\arcsin(U/\rho)$, and azimuth is $A=\mathrm{atan2}(E,N)$ wrapped to one full turn clockwise from true north. A satellite qualifies when its elevation is at least the minimum elevation setting. Aircraft mode also requires a clear path from the selected mount. The visible list is sorted by elevation.
 
 ### Aircraft attitude and antenna blockage
 
