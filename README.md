@@ -1,6 +1,6 @@
-# IridiumTracker
+# Iridium Aircraft Simulator
 
-IridiumTracker plots live Iridium NEXT satellite positions from CelesTrak TLE data. Select a satellite to see its footprint and orbit details. Set an observer location to see current visibility, a 60-minute visibility forecast, and estimated free-space path loss.
+Iridium Aircraft Simulator plots live Iridium NEXT satellite positions from CelesTrak TLE data. Select a satellite to see its footprint and orbit details. Set an observer location to see current visibility, a 60-minute visibility forecast, and estimated free-space path loss.
 
 ## Toolchain
 

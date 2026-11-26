@@ -11,11 +11,13 @@ describe('Generic airframe', () => {
   it('blocks an overhead ray from the belly and clears it from the crown', () => {
     const overhead = bodyDirection(0, 90, 0, 0, 0);
     expect(isBlocked(mounts[0].position, overhead)).toBeFalse();
-    expect(isBlocked(mounts[3].position, overhead)).toBeTrue();
+    expect(isBlocked(mounts[4].position, overhead)).toBeTrue();
   });
 
   it('accounts for bank when checking the shoulder mount', () => {
     expect(isBlocked(mounts[2].position, bodyDirection(0, 90, 0, 0, 90))).toBeTrue();
     expect(isBlocked(mounts[2].position, bodyDirection(0, 90, 0, 0, -90))).toBeFalse();
+    expect(isBlocked(mounts[3].position, bodyDirection(0, 90, 0, 0, 90))).toBeFalse();
+    expect(isBlocked(mounts[3].position, bodyDirection(0, 90, 0, 0, -90))).toBeTrue();
   });
 });

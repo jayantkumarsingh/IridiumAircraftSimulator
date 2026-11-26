@@ -5,6 +5,7 @@ export const mounts = [
   { name: 'Forward roof', description: 'Top of the fuselage near the nose', position: [9, 0, -1.76] },
   { name: 'Rear roof', description: 'Top of the fuselage near the tail', position: [-9, 0, -1.76] },
   { name: 'Upper right side', description: 'High on the right side, above the wing', position: [0, 1.5, -1.35] },
+  { name: 'Upper left side', description: 'High on the left side, above the wing', position: [0, -1.5, -1.35] },
   { name: 'Underside', description: 'Bottom of the fuselage, between the wings', position: [0, 0, 2.01] }
 ] as const satisfies readonly { name: string; description: string; position: Vector }[];
 

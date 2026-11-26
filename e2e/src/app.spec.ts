@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('the browser preview loads the tracker and location panel', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('Iridium Tracker', { exact: true })).toBeVisible();
+  await expect(page.getByText('Iridium Aircraft Simulator', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Load satellites' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'My location' })).toBeVisible();
   await page.getByRole('button', { name: 'Close location panel' }).click();
@@ -74,6 +74,9 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   await expect(page.getByRole('img', { name: 'Top view of the aircraft with the Underside mount highlighted' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Clear satellites by mount over 60 minutes' })).toBeVisible();
   await expect(page.getByText(/blocked by the airframe/)).toBeVisible();
+  await page.getByRole('radio', { name: /Upper left side/ }).check();
+  await expect(page.getByRole('img', { name: 'Top view of the aircraft with the Upper left side mount highlighted' })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: 'Upper left side' })).toBeVisible();
 
   const visibility = await page.getByRole('complementary', { name: 'Satellite visibility' }).boundingBox();
   const mapBounds = await map.boundingBox();
