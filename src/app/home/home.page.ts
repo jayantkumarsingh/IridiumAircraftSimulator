@@ -12,6 +12,7 @@ import { bodyDirection, drawAirframe, isBlocked, mounts } from './airframe';
 
 
 const EARTH_RADIUS_KM = 6371;
+const KILOMETERS_PER_FOOT = 0.0003048;
 const MERCATOR_MARKER_LIMIT = 84;
 const MAP_TILE_SIZE_PX = 256;
 const IRIDIUM_CENTER_FREQUENCY_MHZ = 1621.25;
@@ -58,12 +59,12 @@ export class HomePage implements OnInit, OnDestroy{
     }
   }
   readonly aircraftControls = [
-    { key: 'altitude', label: 'Altitude (m)', min: 0, max: 20000, step: 100 },
-    { key: 'heading', label: 'Heading (°)', min: 0, max: 359, step: 1 },
+    { key: 'altitudeFeet', label: 'Altitude (ft)', min: 0, max: 65617, step: 1 },
+    { key: 'heading', label: 'Heading (° true)', min: 0, max: 359, step: 1 },
     { key: 'pitch', label: 'Pitch (°)', min: -90, max: 90, step: 1 },
-    { key: 'roll', label: 'Roll (°)', min: -180, max: 180, step: 1 }
+    { key: 'roll', label: 'Bank (°)', min: -180, max: 180, step: 1 }
   ] as const;
-  aircraft = { altitude: 10000, heading: 0, pitch: 0, roll: 0 };
+  aircraft = { altitudeFeet: 32808, heading: 0, pitch: 0, roll: 0 };
   blocked: HomePage['visible'] = [];
   mountForecast: { minimum: number; average: number }[] = [];
   locationSource: 'device' | 'custom';
@@ -331,7 +332,7 @@ export class HomePage implements OnInit, OnDestroy{
     this.observer = {
       latitude: position.lat * RADIANS_PER_DEGREE,
       longitude: position.lng * RADIANS_PER_DEGREE,
-      height: this.aircraftMode ? this.aircraft.altitude / 1000 : 0
+      height: this.observerHeightKm
     };
     this.locationSource = source;
     this.changeDetector.markForCheck();
@@ -389,9 +390,13 @@ export class HomePage implements OnInit, OnDestroy{
     this.refreshForecast();
   }
 
+  private get observerHeightKm() {
+    return this.aircraftMode ? this.aircraft.altitudeFeet * KILOMETERS_PER_FOOT : 0;
+  }
+
   private refreshAircraft() {
     if (this.observer) {
-      this.observer = { ...this.observer, height: this.aircraftMode ? this.aircraft.altitude / 1000 : 0 };
+      this.observer = { ...this.observer, height: this.observerHeightKm };
     }
     this.refreshVisibility();
     this.refreshForecast();

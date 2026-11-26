@@ -25,4 +25,13 @@ describe('HomePage', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('converts aircraft altitude in feet to kilometers and restores ground mode', () => {
+    component.observer = { latitude: 0, longitude: 0, height: 0 };
+    component.toggleAircraftMode();
+    component.setAircraftControl('altitudeFeet', 10000);
+    expect(component.observer.height).toBeCloseTo(3.048, 8);
+    component.toggleAircraftMode();
+    expect(component.observer.height).toBe(0);
+  });
 });

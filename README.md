@@ -1,4 +1,4 @@
-﻿# IridiumTracker
+# IridiumTracker
 
 IridiumTracker plots live Iridium NEXT satellite positions from CelesTrak TLE data. Select a satellite to see its footprint and orbit details. Set an observer location to see current visibility, a 60-minute visibility forecast, and estimated free-space path loss.
 
@@ -42,7 +42,7 @@ Angular 22 requires TypeScript 6.0.x. The browser and Android apps use Leaflet w
 
 ## Aircraft antenna simulation
 
-Load satellites, then set an observer position with **Pick on map** or **Use my location**. Enable **Aircraft simulation** in the location panel and enter an altitude, heading, pitch, and roll. Choose an antenna mount to see which satellites the generic airframe blocks. The comparison table shows the minimum and average clear satellite count for each mount across the 60-minute forecast.
+Load satellites, then set an observer position with **Pick on map** or **Use my location**. Enable **Aircraft simulation** in the location panel and enter altitude in feet, true heading, pitch, and bank. Choose an antenna location using the labeled top view to see which satellites the generic airframe blocks. The comparison table shows the minimum and average clear satellite count for each mount across the 60-minute forecast.
 
 The simulation holds the aircraft position and attitude fixed while the satellites move. It models geometric blockage with simplified fuselage, wing, and tail volumes. Antenna radiation patterns and RF effects are outside this model.
 

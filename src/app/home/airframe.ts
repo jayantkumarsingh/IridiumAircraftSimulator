@@ -2,11 +2,11 @@ type Vector = readonly [number, number, number];
 
 // Body axes point forward, right, and down. Airframe dimensions are in meters.
 export const mounts = [
-  { name: 'Forward crown', position: [9, 0, -1.76] },
-  { name: 'Aft crown', position: [-9, 0, -1.76] },
-  { name: 'Right shoulder', position: [0, 1.5, -1.35] },
-  { name: 'Belly', position: [0, 0, 2.01] }
-] as const satisfies readonly { name: string; position: Vector }[];
+  { name: 'Forward roof', description: 'Top of the fuselage near the nose', position: [9, 0, -1.76] },
+  { name: 'Rear roof', description: 'Top of the fuselage near the tail', position: [-9, 0, -1.76] },
+  { name: 'Upper right side', description: 'High on the right side, above the wing', position: [0, 1.5, -1.35] },
+  { name: 'Underside', description: 'Bottom of the fuselage, between the wings', position: [0, 0, 2.01] }
+] as const satisfies readonly { name: string; description: string; position: Vector }[];
 
 const airframe: readonly { center: Vector; radii: Vector }[] = [
   { center: [0, 0, 0], radii: [18, 2, 2] }, // Fuselage
@@ -20,36 +20,41 @@ export function drawAirframe(canvas: HTMLCanvasElement, selectedMount: number) {
   if (!context) {
     return;
   }
-  const scale = canvas.width / 48;
-  const project = ([forward, right, down]: Vector) => [
-    canvas.width / 2 + (forward * 0.86 + right * 0.5) * scale,
-    canvas.height / 2 + (-forward * 0.24 + right * 0.42 + down * 0.87) * scale
-  ] as const;
+  // View from above, with the nose up and the aircraft's right wing on the right.
+  const scale = canvas.width / 420;
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.strokeStyle = '#638ca5';
-  context.lineWidth = 1.3;
-  for (const { center, radii } of airframe) {
-    for (let axis = 0; axis < 3; axis++) {
-      const first = (axis + 1) % 3;
-      const second = (axis + 2) % 3;
-      context.beginPath();
-      for (let step = 0; step <= 48; step++) {
-        const angle = step * Math.PI / 24;
-        const point: [number, number, number] = [...center];
-        point[first] += Math.cos(angle) * radii[first];
-        point[second] += Math.sin(angle) * radii[second];
-        const [x, y] = project(point);
-        context.lineTo(x, y);
-      }
-      context.closePath();
-      context.stroke();
+  context.save();
+  context.scale(scale, scale);
+  context.fillStyle = '#48718a';
+  context.fill(new Path2D('M195 213 L151 248 L151 257 L210 243 L269 257 L269 248 L225 213 Z'));
+  context.fillStyle = '#648da7';
+  context.fill(new Path2D('M197 122 L55 185 L54 198 L199 169 L221 169 L366 198 L365 185 L223 122 Z'));
+  context.fillStyle = '#b4cfdf';
+  context.fill(new Path2D('M210 39 Q193 52 193 85 L193 178 Q195 223 210 256 Q225 223 227 178 L227 85 Q227 52 210 39 Z'));
+  context.fillStyle = '#23485e';
+  context.fill(new Path2D('M198 71 Q210 58 222 71 L221 78 Q210 70 199 78 Z'));
+  context.font = '600 19px system-ui, sans-serif';
+  context.textAlign = 'center';
+  context.fillStyle = '#a6c2d2';
+  context.fillText('Nose', 210, 27);
+
+  mounts.forEach(({ position: [forward, right, down] }, index) => {
+    const selected = index === selectedMount;
+    const underside = down > 0;
+    const x = 210 + right * 8.5;
+    const y = 147 - forward * 6;
+    context.setLineDash(underside ? [3, 2] : []);
+    context.beginPath();
+    context.arc(x, y, selected ? 10 : 5, 0, Math.PI * 2);
+    context.fillStyle = selected ? '#ff927b' : '#29495e';
+    if (!underside) {
+      context.fill();
     }
-  }
-  const [x, y] = project(mounts[selectedMount].position);
-  context.fillStyle = '#ff927b';
-  context.beginPath();
-  context.arc(x, y, 5, 0, Math.PI * 2);
-  context.fill();
+    context.strokeStyle = selected ? (underside ? '#9a3727' : '#fff0df') : '#29495e';
+    context.lineWidth = 2;
+    context.stroke();
+  });
+  context.restore();
 }
 
 export function bodyDirection(azimuth: number, elevation: number, heading: number, pitch: number, roll: number): Vector {

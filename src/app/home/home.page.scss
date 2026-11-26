@@ -6,20 +6,25 @@
   height: 100%;
 }
 
-.tracker-layout.with-satellite {
-  grid-template-columns: minmax(220px, 270px) minmax(0, 1fr);
-  grid-template-areas: "satellite map";
+.tracker-layout.with-left-sidebar {
+  grid-template-columns: minmax(245px, 320px) minmax(0, 1fr);
+  grid-template-areas: "left map";
 }
 
-.tracker-layout.with-location {
-  grid-template-columns: minmax(0, 1fr) minmax(230px, 285px);
-  grid-template-areas: "map location";
+.tracker-layout.with-left-sidebar.with-location {
+  grid-template-columns: minmax(245px, 320px) minmax(0, 1fr) minmax(230px, 285px);
+  grid-template-areas: "left map location";
 }
 
-.tracker-layout.with-satellite.with-location {
-  grid-template-columns: minmax(220px, 270px) minmax(0, 1fr) minmax(230px, 285px);
-  grid-template-areas: "satellite map location";
+.left-sidebar {
+  grid-area: left;
+  min-width: 0;
+  overflow-y: auto;
+  background: #14232f;
 }
+
+.left-sidebar .info-panel { overflow: visible; }
+.left-sidebar .info-panel + .info-panel { border-top: 1px solid #294252; }
 
 #map_canvas {
   grid-area: map;
@@ -28,7 +33,6 @@
   min-height: 0;
 }
 
-.satellite-panel { grid-area: satellite; }
 .location-panel { grid-area: location; }
 
 .info-panel {
@@ -129,8 +133,7 @@
   font-size: 0.78rem;
 }
 
-.aircraft-controls input,
-.aircraft-controls select {
+.aircraft-controls input {
   display: block;
   width: 100%;
   margin-top: 4px;
@@ -141,7 +144,38 @@
   background: #102431;
 }
 
-.aircraft-mount { grid-column: 1 / -1; }
+.aircraft-mounts {
+  margin: 12px 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.aircraft-mounts legend {
+  margin-bottom: 6px;
+  font-size: 0.83rem;
+  font-weight: 650;
+}
+
+.aircraft-mount-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 7px;
+  align-items: center;
+  margin-top: 4px;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.aircraft-mount-option input { accent-color: #ff927b; }
+
+.aircraft-mount-option small {
+  grid-column: 2;
+  color: #adbfcd;
+  line-height: 1.25;
+}
 .airframe-preview { display: block; width: 100%; height: auto; background: #102431; border-radius: 6px; }
 
 .mount-comparison {
@@ -213,9 +247,8 @@ input[type="range"] { width: 100%; accent-color: #71cdee; }
 
 @media (max-width: 780px) {
   .tracker-layout,
-  .tracker-layout.with-satellite,
-  .tracker-layout.with-location,
-  .tracker-layout.with-satellite.with-location {
+  .tracker-layout.with-left-sidebar,
+  .tracker-layout.with-left-sidebar.with-location {
     display: flex;
     flex-direction: column;
     height: auto;
@@ -223,6 +256,7 @@ input[type="range"] { width: 100%; accent-color: #71cdee; }
   }
 
   #map_canvas { order: -1; min-height: 55vh; }
+  .left-sidebar { overflow: visible; }
   .info-panel { overflow-y: visible; border-bottom: 1px solid #294252; }
 }
 

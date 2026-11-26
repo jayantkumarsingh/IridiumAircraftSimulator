@@ -69,9 +69,15 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   await expect(page.getByText('Free-space path loss', { exact: true })).toBeVisible();
 
   await page.getByRole('checkbox', { name: 'Aircraft simulation' }).check();
-  await page.getByRole('spinbutton', { name: 'Altitude (m)' }).fill('8500');
-  await page.getByRole('combobox', { name: 'Antenna mount' }).selectOption({ label: 'Belly' });
-  await expect(page.getByRole('img', { name: 'Generic airframe with Belly mount highlighted' })).toBeVisible();
+  await page.getByRole('spinbutton', { name: 'Altitude (ft)' }).fill('28000');
+  await page.getByRole('radio', { name: /Underside/ }).check();
+  await expect(page.getByRole('img', { name: 'Top view of the aircraft with the Underside mount highlighted' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Clear satellites by mount over 60 minutes' })).toBeVisible();
   await expect(page.getByText(/blocked by the airframe/)).toBeVisible();
+
+  const visibility = await page.getByRole('complementary', { name: 'Satellite visibility' }).boundingBox();
+  const mapBounds = await map.boundingBox();
+  const location = await page.getByRole('complementary', { name: 'My location' }).boundingBox();
+  expect(visibility!.x + visibility!.width).toBeLessThanOrEqual(mapBounds!.x);
+  expect(mapBounds!.x + mapBounds!.width).toBeLessThanOrEqual(location!.x);
 });
