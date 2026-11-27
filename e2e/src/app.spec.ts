@@ -9,18 +9,19 @@ test('the browser preview loads the tracker and location panel', async ({ page }
   await expect(page.getByRole('heading', { name: 'My location' })).toBeHidden();
 });
 
+const tle = [
+  'IRIDIUM 106',
+  '1 41917U 17003A   26329.53984159  .00000050  00000+0  10709-4 0  9994',
+  '2 41917  86.3984  21.0817 0002488  94.6564 265.4916 14.34217874516339',
+  'IRIDIUM 103',
+  '1 41918U 17003B   26329.38761896  .00000040  00000+0  71493-5 0  9996',
+  '2 41918  86.3985  21.0449 0002171  98.6342 261.5100 14.34217740516333',
+].join('\r\n');
+
 test('loads satellite data and calculates visibility on a tall map', async ({ page }) => {
   await page.setViewportSize({ width: 2048, height: 1220 });
   await page.context().grantPermissions(['geolocation']);
   await page.context().setGeolocation({ latitude: 45.322, longitude: -75.931 });
-  const tle = [
-    'IRIDIUM 106',
-    '1 41917U 17003A   26329.53984159  .00000050  00000+0  10709-4 0  9994',
-    '2 41917  86.3984  21.0817 0002488  94.6564 265.4916 14.34217874516339',
-    'IRIDIUM 103',
-    '1 41918U 17003B   26329.38761896  .00000040  00000+0  71493-5 0  9996',
-    '2 41918  86.3985  21.0449 0002171  98.6342 261.5100 14.34217740516333',
-  ].join('\r\n');
   await page.clock.setFixedTime(new Date('2026-11-25T22:00:00Z'));
   let tleRequests = 0;
   await page.route('https://celestrak.org/**', route => {
@@ -142,4 +143,46 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   await loadSatellites.click();
   await failedRefresh;
   await expect(page.getByRole('heading', { name: 'IRIDIUM 106' })).toBeVisible();
+});
+
+test('the Pages build uses the shared TLE and its original fetch time', async ({ page }) => {
+  let directRequests = 0;
+  await page.route('https://celestrak.org/**', route => {
+    directRequests++;
+    return route.abort();
+  });
+  await page.route('https://tile.openstreetmap.org/**', route => route.abort());
+  const response = await page.request.get('/');
+  const html = (await response.text()).replace('</head>',
+    '<meta name="tle-cache" content="iridium-next-tle.json"></head>');
+  await page.route(url => url.pathname === '/' || url.pathname === '/home',
+    route => route.fulfill({ contentType: 'text/html', body: html })
+  );
+  await page.route('/iridium-next-tle.json', route =>
+    route.fulfill({ json: { tle, fetchedAt: Date.parse('2026-11-25T21:00:00Z') } })
+  );
+  await page.clock.setFixedTime(new Date('2026-11-25T22:00:00Z'));
+  await page.goto('/');
+  const load = page.getByRole('button', { name: 'Load satellites' });
+  const loaded = page.getByRole('heading', { name: 'IRIDIUM 106' });
+  const prompt = page.getByText('Click Load satellites to get satellite positions.');
+  await expect(prompt).toBeVisible();
+  await load.click();
+  await expect(loaded).toBeVisible();
+
+  await page.route('/iridium-next-tle.json', route => route.abort());
+  await page.clock.setFixedTime(new Date('2026-11-26T02:59:59Z'));
+  await page.reload();
+  await expect(loaded).toBeVisible();
+
+  await page.clock.setFixedTime(new Date('2026-11-26T03:00:00Z'));
+  await page.reload();
+  await expect(prompt).toBeVisible();
+  const failedRefresh = page.waitForEvent('requestfailed', request =>
+    new URL(request.url()).pathname === '/iridium-next-tle.json'
+  );
+  await load.click();
+  await failedRefresh;
+  await expect(loaded).toBeVisible();
+  expect(directRequests).toBe(0);
 });

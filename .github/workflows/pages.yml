@@ -3,7 +3,12 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '17 */6 * * *'
   workflow_dispatch:
+
+concurrency:
+  group: github-pages
 
 jobs:
   build:
@@ -18,6 +23,24 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build -- --base-href /IridiumAircraftSimulator/
+      - name: Publish shared Iridium NEXT TLE cache
+        run: |
+          curl --fail --silent --show-error --location --max-time 30 --retry 2 \
+            'https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-NEXT&FORMAT=tle' \
+            --output "$RUNNER_TEMP/iridium-next.tle"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const tle = readFileSync(process.env.RUNNER_TEMP + '/iridium-next.tle', 'utf8').trim();
+          const lines = tle.split(/\r?\n/);
+          if (!lines.some((line, index) =>
+            index % 3 === 1 && line.startsWith('1 ') && lines[index + 1]?.startsWith('2 ')
+          )) {
+            throw new Error('CelesTrak did not return TLE data.');
+          }
+          writeFileSync('www/iridium-next-tle.json', JSON.stringify({ tle, fetchedAt: Date.now() }));
+          NODE
+          sed -i 's|</head>|<meta name="tle-cache" content="iridium-next-tle.json"></head>|' www/index.html
       - run: cp www/index.html www/404.html
       - uses: actions/upload-pages-artifact@v4
         with:
