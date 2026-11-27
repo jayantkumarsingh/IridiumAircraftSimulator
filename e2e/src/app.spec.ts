@@ -22,12 +22,16 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
     '2 41918  86.3985  21.0449 0002171  98.6342 261.5100 14.34217740516333',
   ].join('\r\n');
   await page.clock.setFixedTime(new Date('2026-11-25T22:00:00Z'));
-  await page.route('https://celestrak.org/**', route => route.fulfill({
-    status: 200,
-    contentType: 'text/plain',
-    headers: { 'access-control-allow-origin': '*' },
-    body: tle,
-  }));
+  let tleRequests = 0;
+  await page.route('https://celestrak.org/**', route => {
+    tleRequests++;
+    return route.fulfill({
+      status: 200,
+      contentType: 'text/plain',
+      headers: { 'access-control-allow-origin': '*' },
+      body: tle,
+    });
+  });
 
   await page.route('https://tile.openstreetmap.org/**', route => route.fulfill({
     contentType: 'image/png',
@@ -83,4 +87,29 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   const location = await page.getByRole('complementary', { name: 'My location' }).boundingBox();
   expect(visibility!.x + visibility!.width).toBeLessThanOrEqual(mapBounds!.x);
   expect(mapBounds!.x + mapBounds!.width).toBeLessThanOrEqual(location!.x);
+
+  await page.unroute('/');
+  await page.clock.setFixedTime(new Date('2026-11-26T03:59:59Z'));
+  await page.reload();
+  await expect(map).toBeVisible();
+  await loadSatellites.click();
+  await expect(page.getByRole('heading', { name: 'IRIDIUM 106' })).toBeVisible();
+  expect(tleRequests).toBe(1);
+
+  await page.clock.setFixedTime(new Date('2026-11-26T04:00:00Z'));
+  const refresh = page.waitForResponse('https://celestrak.org/**');
+  await loadSatellites.click();
+  await refresh;
+  expect(tleRequests).toBe(2);
+
+  await page.route('https://celestrak.org/**', route => route.abort());
+  await page.clock.setFixedTime(new Date('2026-11-26T10:00:00Z'));
+  await page.reload();
+  await expect(map).toBeVisible();
+  const failedRefresh = page.waitForEvent('requestfailed', request =>
+    request.url().startsWith('https://celestrak.org/')
+  );
+  await loadSatellites.click();
+  await failedRefresh;
+  await expect(page.getByRole('heading', { name: 'IRIDIUM 106' })).toBeVisible();
 });

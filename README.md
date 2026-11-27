@@ -42,6 +42,8 @@ Angular 22 requires TypeScript 6.0.x. The browser and Android apps use Leaflet w
 
 ## Aircraft antenna simulation
 
+**Load satellites** saves the CelesTrak data on the device for six hours. After six hours, the next load attempts a refresh and uses the last saved data if the refresh fails.
+
 Load satellites, then set an observer position with **Pick on map** or **Use my location**. Enable **Aircraft simulation** in the location panel and enter altitude in feet, true heading, pitch, and bank. Choose an antenna location using the labeled top view to see which satellites the generic airframe blocks. The comparison table shows the minimum and average clear satellite count for each mount across the 60-minute forecast.
 
 The simulation holds the aircraft position and attitude fixed while the satellites move. It models geometric blockage with simplified fuselage, wing, and tail volumes. Antenna radiation patterns and RF effects are outside this model.
@@ -197,5 +199,5 @@ The browser tests use Google Chrome and run against the Angular web build.
 | --- | --- |
 | An older Node.js version is active | Run `Get-Command node` and check the terminal PATH. If you previously configured the workspace to use the portable Node.js 12 installation, remove that PATH override or point it at your Node.js 26 installation. |
 | PowerShell says scripts are disabled | Use `npm.cmd` as shown above. The npm scripts use the local Angular and Cordova executables. |
-| The map loads but satellite markers are missing | Click **Load satellites**. In the browser's Network tab, check that the CelesTrak request succeeded and returned TLE text. |
+| The map loads but satellite markers are missing | Click **Load satellites**. If a download is needed, check the CelesTrak request in the browser's Network tab. |
 | The browser cannot get your location | Allow location access for the local preview or select **Pick on map**. |
