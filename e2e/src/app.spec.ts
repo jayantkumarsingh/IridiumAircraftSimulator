@@ -54,6 +54,9 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   await expect(map).toBeVisible();
   await expect(map.getByRole('link', { name: 'OpenStreetMap' })).toBeVisible();
   const footprints = map.locator('.leaflet-overlay-pane svg path');
+  const loadPrompt = page.getByText('Click Load satellites to get satellite positions.');
+  await expect(loadPrompt).toBeVisible();
+  expect(tleRequests).toBe(0);
 
   await page.getByRole('button', { name: 'Use my location' }).click();
   await expect(page.getByText('Device location', { exact: false })).toBeVisible();
@@ -82,6 +85,27 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   await expect(page.getByRole('img', { name: 'Top view of the aircraft with the Upper left side mount highlighted' })).toBeVisible();
   await expect(page.getByRole('rowheader', { name: 'Upper left side' })).toBeVisible();
 
+  const sky = page.getByRole('img', { name: /Sky view/ });
+  const orientation = page.getByRole('combobox', { name: 'Orientation' });
+  const aircraftSymbol = sky.locator('.sky-aircraft');
+  const heading = page.getByRole('spinbutton', { name: /Heading/ });
+  await heading.fill('90');
+  await heading.press('Tab');
+  await expect(sky).toHaveAccessibleName(/aircraft heading at the top/);
+  await expect(sky).toHaveCSS('rotate', '-90deg');
+  await expect(sky.getByText('E', { exact: true })).toHaveCSS('rotate', '90deg');
+  await expect(aircraftSymbol).toBeVisible();
+  await expect(orientation).toHaveValue('heading');
+  await orientation.selectOption('north');
+  await expect(sky).toHaveAccessibleName(/north at the top/);
+  await expect(sky).toHaveCSS('rotate', '0deg');
+  await expect(aircraftSymbol).toHaveCSS('transform', 'matrix(0, 1, -1, 0, -11, -11)');
+  await orientation.selectOption('heading');
+  await expect(sky).toHaveCSS('rotate', '-90deg');
+  await page.getByRole('checkbox', { name: 'Aircraft simulation' }).uncheck();
+  await expect(sky).toHaveAccessibleName(/north at the top/);
+  await expect(sky).toHaveCSS('rotate', '0deg');
+
   const visibility = await page.getByRole('complementary', { name: 'Satellite visibility' }).boundingBox();
   const mapBounds = await map.boundingBox();
   const location = await page.getByRole('complementary', { name: 'My location' }).boundingBox();
@@ -92,20 +116,26 @@ test('loads satellite data and calculates visibility on a tall map', async ({ pa
   await page.clock.setFixedTime(new Date('2026-11-26T03:59:59Z'));
   await page.reload();
   await expect(map).toBeVisible();
-  await loadSatellites.click();
   await expect(page.getByRole('heading', { name: 'IRIDIUM 106' })).toBeVisible();
+  await expect(loadPrompt).toBeHidden();
   expect(tleRequests).toBe(1);
 
   await page.clock.setFixedTime(new Date('2026-11-26T04:00:00Z'));
+  await page.reload();
+  await expect(loadPrompt).toBeVisible();
+  await expect(map.locator('.leaflet-marker-icon')).toHaveCount(0);
+  expect(tleRequests).toBe(1);
   const refresh = page.waitForResponse('https://celestrak.org/**');
   await loadSatellites.click();
   await refresh;
+  await expect(page.getByRole('heading', { name: 'IRIDIUM 106' })).toBeVisible();
   expect(tleRequests).toBe(2);
 
   await page.route('https://celestrak.org/**', route => route.abort());
   await page.clock.setFixedTime(new Date('2026-11-26T10:00:00Z'));
   await page.reload();
   await expect(map).toBeVisible();
+  await expect(loadPrompt).toBeVisible();
   const failedRefresh = page.waitForEvent('requestfailed', request =>
     request.url().startsWith('https://celestrak.org/')
   );

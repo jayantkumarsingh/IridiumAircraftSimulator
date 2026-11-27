@@ -221,6 +221,15 @@ input[type="range"] { width: 100%; accent-color: #71cdee; }
 .forecast-bar { background: #64bcdf; border-radius: 2px 2px 0 0; }
 .forecast-axis { display: flex; justify-content: space-between; font-size: 0.7rem; color: #adbfcd; }
 
+.sky-orientation { display: flex; align-items: center; gap: 8px; }
+.sky-orientation select {
+  color: inherit;
+  background: #142330;
+  border: 1px solid #7191a5;
+  border-radius: 4px;
+  padding: 4px;
+}
+
 .sky {
   position: relative;
   width: 80%;
@@ -229,13 +238,15 @@ input[type="range"] { width: 100%; accent-color: #71cdee; }
   margin: 18px auto 0;
   border: 1px solid #7191a5;
   border-radius: 50%;
+  rotate: calc(-1 * var(--heading));
   background:
     linear-gradient(transparent 49.5%, #486273 50%, transparent 50.5%),
     linear-gradient(90deg, transparent 49.5%, #486273 50%, transparent 50.5%),
     radial-gradient(circle, transparent 32%, #486273 33%, transparent 34%, transparent 65%, #486273 66%, transparent 67%);
 }
 
-.sky span { position: absolute; font-size: 0.72rem; }
+.sky > span { position: absolute; font-size: 0.72rem; }
+.sky > span > span { display: inline-block; rotate: var(--heading); }
 .north, .south { left: 50%; transform: translateX(-50%); }
 .north { top: -16px; }
 .south { bottom: -16px; }
@@ -243,6 +254,18 @@ input[type="range"] { width: 100%; accent-color: #71cdee; }
 .east { right: -14px; }
 .west { left: -17px; }
 .sky-dot { width: 9px; height: 9px; border-radius: 50%; background: #a9def4; transform: translate(-50%, -50%); }
+.sky-aircraft {
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+  background: #fff;
+  transform: translate(-50%, -50%) rotate(var(--aircraft-heading));
+  clip-path: polygon(50% 0, 57% 12%, 57% 36%, 100% 65%, 100% 77%, 57% 61%, 57% 81%,
+    74% 92%, 74% 100%, 50% 92%, 26% 100%, 26% 92%, 43% 81%, 43% 61%, 0 77%,
+    0 65%, 43% 36%, 43% 12%);
+}
 .panel-body .sky-caption { margin-top: 19px; text-align: center; }
 
 @media (max-width: 780px) {

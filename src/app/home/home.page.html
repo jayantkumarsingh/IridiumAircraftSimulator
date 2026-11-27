@@ -2,7 +2,7 @@
   <ion-toolbar>
     <ion-title>Iridium Aircraft Simulator</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="onButtonClick()">Load satellites</ion-button>
+      <ion-button (click)="loadSatellites()">Load satellites</ion-button>
       @if (selected) {
         <ion-button (click)="toggleAllFootprints()" [attr.aria-pressed]="showAllFootprints">
           {{ showAllFootprints ? 'Hide all footprints' : 'Show all footprints' }}
@@ -14,6 +14,11 @@
       [attr.aria-expanded]="showLocation">My location</ion-button>
     </ion-buttons>
   </ion-toolbar>
+  @if (map && !selected) {
+    <ion-toolbar>
+      <ion-text slot="start" class="ion-padding-start" role="status">Click Load satellites to get satellite positions.</ion-text>
+    </ion-toolbar>
+  }
 </ion-header>
 
 <ion-content>
@@ -84,9 +89,22 @@
                     </table>
                   }
                   <h3>Sky view</h3>
-                  <div class="sky" aria-label="Sky view with north at the top and zenith at the center">
-                    <span class="north">N</span><span class="east">E</span>
-                    <span class="south">S</span><span class="west">W</span>
+                  @if (aircraftMode) {
+                    <label class="sky-orientation">
+                      Orientation
+                      <select #orientation (change)="skyHeadingUp = orientation.value === 'heading'">
+                        <option value="north" [selected]="!skyHeadingUp">North Up</option>
+                        <option value="heading" [selected]="skyHeadingUp">Heading Up</option>
+                      </select>
+                    </label>
+                  }
+                  <div class="sky" role="img"
+                    [style.--heading]="(aircraftMode && skyHeadingUp ? aircraft.heading : 0) + 'deg'"
+                    [attr.aria-label]="aircraftMode && skyHeadingUp
+                      ? 'Sky view with aircraft heading at the top and zenith at the center'
+                      : 'Sky view with north at the top and zenith at the center'">
+                    <span class="north"><span>N</span></span><span class="east"><span>E</span></span>
+                    <span class="south"><span>S</span></span><span class="west"><span>W</span></span>
                     @for (item of visible; track item) {
                       <span class="sky-dot" [style.left.%]="item.x"
                       [style.top.%]="item.y" [attr.title]="item.name"></span>
@@ -95,8 +113,15 @@
                       <span class="sky-dot blocked-dot" [style.left.%]="item.x"
                       [style.top.%]="item.y" [attr.title]="item.name + ' (blocked)'"></span>
                     }
+                    <span class="sky-aircraft" aria-hidden="true"
+                      [style.--aircraft-heading]="(aircraftMode ? aircraft.heading : 0) + 'deg'"></span>
                   </div>
-                  <p class="muted sky-caption">Center is directly overhead.</p>
+                  <p class="muted sky-caption">
+                    @if (aircraftMode && skyHeadingUp) {
+                      Top is the aircraft heading.
+                    }
+                    Center is directly overhead.
+                  </p>
                   @if (aircraftMode) {
                     <p class="muted sky-caption">Coral markers show blocked satellites.</p>
                   }

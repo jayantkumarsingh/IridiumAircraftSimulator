@@ -24,11 +24,20 @@ export class SatelliteProviderService {
     return this.load(this.nativeHttp.get(this.url));
   }
 
+  getFreshCachedData(): string | undefined {
+    return this.freshTle(this.readCache());
+  }
+
+  private freshTle(cached: CachedTle | undefined): string | undefined {
+    return cached && Date.now() - cached.fetchedAt < this.maxCacheAgeMs ? cached.tle : undefined;
+  }
+
   private load(request: Observable<string>): Observable<string> {
     return defer(() => {
       const cached = this.readCache();
-      if (cached && Date.now() - cached.fetchedAt < this.maxCacheAgeMs) {
-        return of(cached.tle);
+      const fresh = this.freshTle(cached);
+      if (fresh) {
+        return of(fresh);
       }
 
       return request.pipe(

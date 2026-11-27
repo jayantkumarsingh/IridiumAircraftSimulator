@@ -49,6 +49,7 @@ export class HomePage implements OnInit, OnDestroy{
   minimumElevation = 20;
   observer: GeodeticLocation;
   aircraftMode = false;
+  skyHeadingUp = true;
   readonly mounts = mounts;
   mountIndex = 0;
   private aircraftPreview?: HTMLCanvasElement;
@@ -163,10 +164,14 @@ export class HomePage implements OnInit, OnDestroy{
       this.updateFootprints();
       this.changeDetector.markForCheck();
     }));
+    const cachedTle = this.satDataProvider.getFreshCachedData();
+    if (cachedTle) {
+      void this.loadSatellites(cachedTle);
+    }
     this.changeDetector.markForCheck();
   }
 
-  async onButtonClick() {
+  async loadSatellites(cachedTle?: string) {
     if (!this.map || this.loadingSatellites) {
       return;
     }
@@ -174,13 +179,16 @@ export class HomePage implements OnInit, OnDestroy{
     this.loadingSatellites = true;
     let loading: HTMLIonLoadingElement;
     try {
-      loading = await this.loadingCtrl.create({ message: 'Loading satellites…' });
-      await loading.present();
+      let tle = cachedTle;
+      if (tle === undefined) {
+        loading = await this.loadingCtrl.create({ message: 'Loading satellites…' });
+        await loading.present();
 
-      const request = this.plt.is('cordova') && this.plt.is('android')
-        ? this.satDataProvider.getDataNative()
-        : this.satDataProvider.getData();
-      const tle: string = await firstValueFrom(request);
+        const request = this.plt.is('cordova') && this.plt.is('android')
+          ? this.satDataProvider.getDataNative()
+          : this.satDataProvider.getData();
+        tle = await firstValueFrom(request);
+      }
       if (this.destroyed) {
         return;
       }

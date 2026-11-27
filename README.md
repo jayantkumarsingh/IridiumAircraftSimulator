@@ -42,7 +42,7 @@ Angular 22 requires TypeScript 6.0.x. The browser and Android apps use Leaflet w
 
 ## Aircraft antenna simulation
 
-**Load satellites** saves the CelesTrak data on the device for six hours. After six hours, the next load attempts a refresh and uses the last saved data if the refresh fails.
+The map automatically loads CelesTrak data saved in the past six hours. If the cache is missing or expired, click **Load satellites** to download fresh data. If the download fails, the simulator uses the last saved data when available.
 
 Load satellites, then set an observer position with **Pick on map** or **Use my location**. Enable **Aircraft simulation** in the location panel and enter altitude in feet, true heading, pitch, and bank. Choose an antenna location using the labeled top view to see which satellites the generic airframe blocks. The comparison table shows the minimum and average clear satellite count for each mount across the 60-minute forecast.
 
